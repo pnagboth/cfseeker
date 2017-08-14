@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/cloudfoundry-community/cfseeker/config"
+	"github.com/cloudfoundry-community/cfseeker/seeker"
 	"github.com/starkandwayne/goutils/ansi"
 	"github.com/starkandwayne/goutils/log"
 
@@ -31,9 +32,27 @@ var (
 	appNameFind = findCom.Flag("app", "The name of the app to look up").Short('a').String()
 	appGUIDFind = findCom.Flag("app-guid", "The GUID assigned to the app to look up").Short('g').String()
 
+	//CONVERT
+	convCom = cmdLine.Command("convert", "Convert from GUID to name")
+
+	guidConvCom  = convCom.Command("guid", "Convert a GUID to the information it points to")
+	guidGUIDConv = guidConvCom.Flag("guid", "GUID to get a name for").Short('g').Required().String()
+
+	orgConvCom     = convCom.Command("org", "Convert an org name to its GUID")
+	orgNameOrgConv = orgConvCom.Flag("org", "Name of the org").Short('o').Required().String()
+
+	spaceConvCom       = convCom.Command("space", "Convert org and space names to its org and space GUIDs")
+	orgNameSpaceConv   = spaceConvCom.Flag("org", "Name of the org").Short('o').Required().String()
+	spaceNameSpaceConv = spaceConvCom.Flag("space", "Name of the space").Short('s').Required().String()
+
+	appConvCom       = convCom.Command("app", "Convert org, space, and app names to their respective GUID information")
+	orgNameAppConv   = appConvCom.Flag("org", "Name of the org").Short('o').Required().String()
+	spaceNameAppConv = appConvCom.Flag("space", "Name of the space").Short('s').Required().String()
+	appNameAppConv   = appConvCom.Flag("app", "Name of the app").Short('a').Required().String()
+
 	//SERVER
 	serverCom    = cmdLine.Command("server", "Run cfseeker in server mode")
-	cfModeServer = cmdLine.Flag("cf", "Override port in config to use PORT environment variable").Bool()
+	cfModeServer = serverCom.Flag("cf", "Override port in config to use PORT environment variable").Bool()
 
 	//INVALIDATE
 	invalidateCom = cmdLine.Command("invalidate", "Invalidate the BOSH cache on a cfseeker server")
@@ -47,7 +66,7 @@ var (
 	conf *config.Config
 )
 
-type commandFn func(inputs interface{}) (interface{}, error)
+type commandFn func(inputs interface{}) (seeker.Output, error)
 
 func main() {
 	cmdLine.HelpFlag.Short('h')

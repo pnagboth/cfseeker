@@ -28,11 +28,36 @@ func getStandaloneFn(command string) (toRun commandFn, toInput interface{}) {
 		bailWith("Cannot run invalidate command without --target (-t) set")
 	case "info", "meta":
 		bailWith("Cannot run info command without --target (-t) set")
+	case "convert guid":
+		toRun = convertCommand
+		toInput = commands.ConvertInput{
+			GUID: *guidGUIDConv,
+		}
+	case "convert org":
+		toRun = convertCommand
+		toInput = commands.ConvertInput{
+			OrgName: *orgNameOrgConv,
+		}
+	case "convert space":
+		toRun = convertCommand
+		toInput = commands.ConvertInput{
+			OrgName:   *orgNameSpaceConv,
+			SpaceName: *spaceNameSpaceConv,
+		}
+	case "convert app":
+		toRun = convertCommand
+		toInput = commands.ConvertInput{
+			OrgName:   *orgNameAppConv,
+			SpaceName: *spaceNameAppConv,
+			AppName:   *appNameAppConv,
+		}
+	default:
+		bailWith("Unrecognized command: %s", command)
 	}
 	return
 }
 
-func findCommand(input interface{}) (interface{}, error) {
+func findCommand(input interface{}) (seeker.Output, error) {
 	in := input.(commands.FindInput)
 	s, err := seeker.NewSeeker(conf)
 	if err != nil {
@@ -45,7 +70,7 @@ type serverInput struct {
 	conf *config.Config
 }
 
-func serverCommand(input interface{}) (interface{}, error) {
+func serverCommand(input interface{}) (seeker.Output, error) {
 	var err error
 	in := input.(serverInput)
 	if *cfModeServer {
@@ -57,4 +82,15 @@ func serverCommand(input interface{}) (interface{}, error) {
 	}
 	err = api.Initialize(in.conf) //Never exits without an error
 	return nil, err
+}
+
+func convertCommand(input interface{}) (seeker.Output, error) {
+	var err error
+	in := input.(commands.ConvertInput)
+	conf.SkipBOSH()
+	s, err := seeker.NewSeeker(conf)
+	if err != nil {
+		return nil, err
+	}
+	return commands.Convert(s, in)
 }
